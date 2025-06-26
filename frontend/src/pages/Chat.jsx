@@ -102,11 +102,11 @@ const Chat = () => {
         value={activeRoom?.id || ""}
         onChange={(e) =>
           setActiveRoom(rooms.find((r) => r.id === parseInt(e.target.value)))
-        }
+        } 
         className="mb-4 w-full p-2 rounded-lg border border-gray-300 shadow"
       >
         <option disabled value="">
-          Select a Room
+         please Select a Room
         </option>
         {rooms.map((room) => (
           <option key={room.id} value={room.id}>
