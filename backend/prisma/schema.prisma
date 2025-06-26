@@ -31,4 +31,11 @@ model Message {
   receiver   User?    @relation("ReceivedMessages", fields: [receiverId], references: [id])
   receiverId Int?
 }
+model Room {
+  id      Int    @id @default(autoincrement())
+  name    String
+  topic   String
+  createdAt DateTime @default(now())
+}
+
 

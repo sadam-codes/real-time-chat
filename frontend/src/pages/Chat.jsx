@@ -73,9 +73,8 @@ const Chat = () => {
   return (
     <div className="p-6 max-w-3xl mx-auto min-h-screen bg-gradient-to-b from-gray-100 via-white to-gray-200">
       <h1 className="text-2xl font-semibold mb-6 text-center text-gray-800">
-        👋 Welcome, <span className="text-blue-600">{user?.name || "Guest"}</span>
+        👋 Welcome, <span className="text-gray-800">{user?.name || "Guest"}</span>
       </h1>
-
       <div className="h-[420px] overflow-y-auto border border-gray-300 bg-white rounded-xl shadow-inner p-4 mb-6 space-y-2">
         {messages.map((m, i) => {
           const isSender = m.sender?.id === user?.id;
