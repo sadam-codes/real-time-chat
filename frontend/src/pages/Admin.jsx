@@ -6,6 +6,7 @@ const Admin = () => {
   const [rooms, setRooms] = useState([]);
   const [name, setName] = useState("");
   const [topic, setTopic] = useState("");
+  const [botEnabled, setBotEnabled] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
 
   const token = localStorage.getItem("token");
@@ -29,20 +30,21 @@ const Admin = () => {
       if (editingRoom) {
         await axios.put(
           `http://localhost:3000/rooms/${editingRoom.id}`,
-          { name, topic },
+          { name, topic, botEnabled },
           { headers: { Authorization: `Bearer ${token}` } }
         );
         toast.success("Room updated!");
       } else {
         await axios.post(
           "http://localhost:3000/rooms",
-          { name, topic },
+          { name, topic, botEnabled },
           { headers: { Authorization: `Bearer ${token}` } }
         );
         toast.success("Room created!");
       }
       setName("");
       setTopic("");
+      setBotEnabled(false);
       setEditingRoom(null);
       fetchRooms();
     } catch (err) {
@@ -54,6 +56,7 @@ const Admin = () => {
     setEditingRoom(room);
     setName(room.name);
     setTopic(room.topic);
+    setBotEnabled(room.botEnabled ?? false);
   };
 
   const handleDelete = async (roomId) => {
@@ -79,6 +82,7 @@ const Admin = () => {
         Admin Dashboard
       </h1>
 
+      {/* Create/Edit Room Form */}
       <div className="mb-10 bg-white shadow rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">
           {editingRoom ? "Edit Room" : "Create Room"}
@@ -97,14 +101,30 @@ const Admin = () => {
             onChange={(e) => setTopic(e.target.value)}
           />
         </div>
+
+        {/* Enable Bot Checkbox */}
+        <div className="flex items-center gap-3 mt-4">
+          <label className="text-gray-700 font-medium">Enable Bot:</label>
+          <input
+            type="checkbox"
+            checked={botEnabled}
+            onChange={(e) => setBotEnabled(e.target.checked)}
+            className="w-4 h-4"
+          />
+          <span className="text-sm text-gray-600">
+            {botEnabled ? "Yes" : "No"}
+          </span>
+        </div>
+
         <button
-          className="mt-4 w-full bg-black text-white py-2 rounded-lg"
+          className="mt-6 w-full bg-black text-white py-2 rounded-lg"
           onClick={handleSave}
         >
           {editingRoom ? "Update Room" : "Create Room"}
         </button>
       </div>
 
+      {/* Room List */}
       <div className="bg-white shadow rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">All Rooms</h2>
         {rooms.length === 0 ? (
@@ -119,6 +139,9 @@ const Admin = () => {
                 <div>
                   <p className="font-semibold">{room.name}</p>
                   <p className="text-gray-600 text-sm">{room.topic}</p>
+                  <p className="text-sm text-blue-500 mt-1">
+                    Bot: {room.botEnabled ? "Enabled 🤖" : "Disabled"}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <button

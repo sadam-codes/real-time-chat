@@ -42,6 +42,9 @@ const Rooms = () => {
                 <div>
                   <p className="font-semibold text-gray-800">{room.name}</p>
                   <p className="text-sm text-gray-500">{room.topic}</p>
+                  <p className="text-sm text-blue-500">
+                    Bot: {room.botEnabled ? "Yes 🤖" : "No"}
+                  </p>
                 </div>
                 <button
                   onClick={() => handleJoin(room)}

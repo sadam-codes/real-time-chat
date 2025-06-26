@@ -1,4 +1,3 @@
-// ==================== React Frontend (Chat.jsx) ====================
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { LuMessageCircleMore } from "react-icons/lu";
@@ -9,6 +8,8 @@ const Chat = () => {
   const [text, setText] = useState("");
   const [chatWith, setChatWith] = useState(null);
   const [users, setUsers] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [activeRoom, setActiveRoom] = useState(null);
   const socket = useRef(null);
   const navigate = useNavigate();
 
@@ -26,6 +27,7 @@ const Chat = () => {
     if (!user || !token) navigate("/");
   }, [navigate]);
 
+  // Fetch users
   useEffect(() => {
     fetch("http://localhost:3000/users")
       .then((res) => res.json())
@@ -36,6 +38,17 @@ const Chat = () => {
       });
   }, []);
 
+  // Fetch rooms
+  useEffect(() => {
+    fetch("http://localhost:3000/rooms")
+      .then((res) => res.json())
+      .then((data) => {
+        setRooms(data);
+        setActiveRoom(data[0]);
+      });
+  }, []);
+
+  // WebSocket setup
   useEffect(() => {
     socket.current = new WebSocket("ws://localhost:3000");
     socket.current.onopen = () => console.log("WebSocket connected");
@@ -53,15 +66,23 @@ const Chat = () => {
 
   const send = () => {
     if (!text.trim()) return;
-
     if (!chatWith?.id) {
       toast.error("No recipient selected");
+      return;
+    }
+    if (!activeRoom?.id) {
+      toast.error("No room selected");
       return;
     }
 
     try {
       socket.current.send(
-        JSON.stringify({ token, content: text, receiverId: chatWith.id })
+        JSON.stringify({
+          token,
+          content: text,
+          receiverId: chatWith.id,
+          roomId: activeRoom.id,
+        })
       );
       setText("");
     } catch (e) {
@@ -75,42 +96,65 @@ const Chat = () => {
       <h1 className="text-2xl font-semibold mb-6 text-center text-gray-800">
         👋 Welcome, <span className="text-gray-800">{user?.name || "Guest"}</span>
       </h1>
+
+      {/* Room Selector */}
+      <select
+        value={activeRoom?.id || ""}
+        onChange={(e) =>
+          setActiveRoom(rooms.find((r) => r.id === parseInt(e.target.value)))
+        }
+        className="mb-4 w-full p-2 rounded-lg border border-gray-300 shadow"
+      >
+        <option disabled value="">
+          Select a Room
+        </option>
+        {rooms.map((room) => (
+          <option key={room.id} value={room.id}>
+            {room.name} - {room.topic}
+          </option>
+        ))}
+      </select>
+
+      {/* Messages */}
       <div className="h-[420px] overflow-y-auto border border-gray-300 bg-white rounded-xl shadow-inner p-4 mb-6 space-y-2">
-        {messages.map((m, i) => {
-          const isSender = m.sender?.id === user?.id;
-          return (
-            <div
-              key={i}
-              className={`flex items-start gap-3 ${isSender ? "justify-start" : "justify-end"
-                }`}
-            >
-              <img
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  m.sender?.name || "U"
-                )}&background=${isSender ? "random" : "0D8ABC"}&size=32`}
-                alt="avatar"
-                className="w-9 h-9 rounded-full border shadow"
-              />
-              <div className="flex flex-col max-w-[70%] text-left">
-                <strong
-                  className={`text-xs mb-1 font-medium ${isSender ? "text-blue-600" : "text-green-600"
+        {messages
+          .filter((m) => m.roomId === activeRoom?.id)
+          .map((m, i) => {
+            const isSender = m.sender?.id === user?.id;
+            return (
+              <div
+                key={i}
+                className={`flex items-start gap-3 ${isSender ? "justify-start" : "justify-end"}`}
+              >
+                <img
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    m.sender?.name || "U"
+                  )}&background=${isSender ? "random" : "0D8ABC"}&size=32`}
+                  alt="avatar"
+                  className="w-9 h-9 rounded-full border shadow"
+                />
+                <div className="flex flex-col max-w-[70%] text-left">
+                  <strong
+                    className={`text-xs mb-1 font-medium ${isSender ? "text-blue-600" : "text-green-600"}`}
+                  >
+                    {m.sender?.name || "Unknown"}
+                  </strong>
+                  <div
+                    className={`whitespace-pre-wrap break-words px-4 py-2 rounded-2xl text-sm shadow-sm ${
+                      isSender
+                        ? "bg-blue-50 text-blue-900 border border-blue-200"
+                        : "bg-green-50 text-green-900 border border-green-200"
                     }`}
-                >
-                  {m.sender?.name || "Unknown"}
-                </strong>
-                <div
-                  className={`whitespace-pre-wrap break-words px-4 py-2 rounded-2xl text-sm shadow-sm ${isSender
-                    ? "bg-blue-50 text-blue-900 border border-blue-200"
-                    : "bg-green-50 text-green-900 border border-green-200"
-                    }`}
-                >
-                  {m.content}
+                  >
+                    {m.content}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
+
+      {/* Input & Send */}
       <div className="flex gap-3 items-center">
         <input
           value={text}
@@ -128,6 +172,6 @@ const Chat = () => {
       </div>
     </div>
   );
-
 };
+
 export default Chat;

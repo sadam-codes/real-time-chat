@@ -12,12 +12,20 @@ enum Role {
   ADMIN
 }
 
+model Room {
+  id         Int      @id @default(autoincrement())
+  name       String
+  topic      String
+  botEnabled Boolean  @default(false)
+  messages   Message[]
+}
+
 model User {
   id               Int       @id @default(autoincrement())
   name             String
   email            String    @unique
   password         String
-  role             Role      @default(USER) 
+  role             Role      @default(USER)
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
 }
@@ -30,12 +38,6 @@ model Message {
   senderId   Int
   receiver   User?    @relation("ReceivedMessages", fields: [receiverId], references: [id])
   receiverId Int?
+  room       Room?    @relation(fields: [roomId], references: [id])
+  roomId     Int?     // Make it optional for now
 }
-model Room {
-  id      Int    @id @default(autoincrement())
-  name    String
-  topic   String
-  createdAt DateTime @default(now())
-}
-
-
